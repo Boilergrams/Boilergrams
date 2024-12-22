@@ -19,7 +19,7 @@ export async function runBoilergramsMakerScript(seed: number): Promise<string> {
 }
 
 export function getTodaysDate(): number {
-	return Number(new Date().toISOString().split("T")[0].replace(/-/g, "")) + 2;
+	return Number(new Date().toISOString().split("T")[0].replace(/-/g, ""));
 }
 
 export function isDigit(str: string): boolean {

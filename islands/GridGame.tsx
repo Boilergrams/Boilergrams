@@ -6,7 +6,7 @@ export default function GridGame() {
 	const gridSize = useSignal({ rows: 0, cols: 0 });
 	const grid = useSignal<{ letter: string }[][]>([]);
 	const letterBank = useSignal<string>("");
-	const selectedCell = useSignal<{ row: number; col: number } | null>(null);
+	const selectedCell = useSignal<{ row: number; col: number } | null>(null);  // TODO : Make this default 
 	const modifiableIndices = useSignal<{ row: number; col: number }[]>([]);
 	const correctLetters = useSignal<Record<string, number>>({});
 	const answerKey = useSignal<string[][]>([]);
@@ -70,6 +70,11 @@ export default function GridGame() {
 	}, []);
 
 	const handleKeyPress = (e: KeyboardEvent) => {
+		if (e.key === 'Enter') {
+			handleSubmit();
+			return;
+		}
+
 		if (selectedCell.value !== null) {
 			const { row, col } = selectedCell.value;
 
@@ -81,7 +86,7 @@ export default function GridGame() {
 						);
 						if (isModifiable) {
 							selectedCell.value = { row: new_row, col };
-							break;
+							return;
 						}
 					}
 				} else if (e.key === "ArrowDown") {
@@ -91,7 +96,7 @@ export default function GridGame() {
 						);
 						if (isModifiable) {
 							selectedCell.value = { row: new_row, col };
-							break;
+							return;
 						}
 					}
 				} else if (e.key === "ArrowLeft") {
@@ -101,7 +106,7 @@ export default function GridGame() {
 						);
 						if (isModifiable) {
 							selectedCell.value = { row, col: new_col };
-							break;
+							return;
 						}
 					}
 				} else if (e.key === "ArrowRight") {
@@ -111,13 +116,108 @@ export default function GridGame() {
 						);
 						if (isModifiable) {
 							selectedCell.value = { row, col: new_col };
-							break;
+							return;
+						}
+					}
+				}
+
+				const directions: {[key: string]: {primary: Array<number>, secondary: Array<Array<number>>}} = {
+					ArrowUp: {
+						primary: [-1, 0],
+						secondary: [
+							[0, -1], // Up and Left
+							[0, 1]  // Up and Right
+						]
+					},
+					ArrowDown: {
+						primary: [1, 0],
+						secondary: [
+							[0, -1], // Down and Left
+							[0, 1]  // Down and Right
+						]
+					},
+					ArrowLeft: {
+						primary: [0, -1],
+						secondary: [
+							[-1, 0], // Left and Up
+							[1, 0]  // Left and Down
+						]
+					},
+					ArrowRight: {
+						primary: [0, 1],
+						secondary: [
+							[-1, 0], // Right and Up
+							[1, 0]  // Right and Down
+						]
+					}
+				};
+			
+				const move = directions[e.key];
+				if (move) {
+					// Prioritize moving in the same direction regardless of distance
+					const primaryTargets = modifiableIndices.value.filter(
+						(index) => (index.row - row) * move.primary[0] > 0 && (index.col - col) * move.primary[1] > 0 &&
+								   (index.row - row) * move.primary[1] === 0 && (index.col - col) * move.primary[0] === 0
+					);
+			
+					if (primaryTargets.length > 0) {
+						const closestPrimary = primaryTargets.reduce((closest, current) => {
+							const closestDistance = Math.abs(closest.row - row) + Math.abs(closest.col - col);
+							const currentDistance = Math.abs(current.row - row) + Math.abs(current.col - col);
+							return currentDistance < closestDistance ? current : closest;
+						});
+						selectedCell.value = { row: closestPrimary.row, col: closestPrimary.col };
+						return;
+					}
+			
+					// Check primary direction step by step
+					for (let distance = 1; distance < Math.max(gridSize.value.rows, gridSize.value.cols); distance++) {
+						const primaryRow = row + move.primary[0] * distance;
+						const primaryCol = col + move.primary[1] * distance;
+			
+						if (
+							primaryRow >= 0 &&
+							primaryRow < gridSize.value.rows &&
+							primaryCol >= 0 &&
+							primaryCol < gridSize.value.cols
+						) {
+							const isPrimaryModifiable = modifiableIndices.value.some(
+								(index) => index.row === primaryRow && index.col === primaryCol
+							);
+			
+							if (isPrimaryModifiable) {
+								selectedCell.value = { row: primaryRow, col: primaryCol };
+								return;
+							}
+						}
+			
+						// Check secondary directions if primary fails
+						for (const sec of move.secondary) {
+							for (let secondaryDistance = 1; secondaryDistance < Math.max(gridSize.value.rows, gridSize.value.cols); secondaryDistance++) {
+								const secondaryRow = row + move.primary[0] * distance + sec[0] * secondaryDistance;
+								const secondaryCol = col + move.primary[1] * distance + sec[1] * secondaryDistance;
+			
+								if (
+									secondaryRow >= 0 &&
+									secondaryRow < gridSize.value.rows &&
+									secondaryCol >= 0 &&
+									secondaryCol < gridSize.value.cols
+								) {
+									const isSecondaryModifiable = modifiableIndices.value.some(
+										(index) => index.row === secondaryRow && index.col === secondaryCol
+									);
+			
+									if (isSecondaryModifiable) {
+										selectedCell.value = { row: secondaryRow, col: secondaryCol };
+										return;
+									}
+								}
+							}
 						}
 					}
 				}
 				return;
-			}
-			
+			}			
 
 			const isModifiable = modifiableIndices.value.some(
 				(index) => index.row === row && index.col === col,
@@ -249,6 +349,7 @@ export default function GridGame() {
 			<button
 				class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
 				onClick={handleSubmit}
+				tabIndex={-1} // Prevent focus via Tab
 			>
 				Submit Grid
 			</button>
