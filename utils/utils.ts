@@ -45,7 +45,7 @@ function seededRandom(seed: number): () => number {
 }
 
 export function randomizeString(input: string, seed: number): string {
-	const charArray = input.split('');
+	const charArray = input.split("");
 	const random = seededRandom(seed);
 
 	for (let i = charArray.length - 1; i > 0; i--) {
@@ -53,5 +53,12 @@ export function randomizeString(input: string, seed: number): string {
 		[charArray[i], charArray[j]] = [charArray[j], charArray[i]];
 	}
 
-	return charArray.join('');
+	return charArray.join("");
+}
+
+export function seconds_to_display_string(seconds: number): string {
+	if (seconds < 60) {
+		return `${seconds}s`;
+	}
+	return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }

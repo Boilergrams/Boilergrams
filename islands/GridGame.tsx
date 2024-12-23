@@ -1,15 +1,28 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import { isDigit, isLowerCase, randomizeString } from "../utils/utils.ts";
+import { isDigit, isLowerCase, randomizeString, seconds_to_display_string } from "../utils/utils.ts";
 
 export default function GridGame() {
 	const gridSize = useSignal({ rows: 0, cols: 0 });
 	const grid = useSignal<{ letter: string }[][]>([]);
 	const letterBank = useSignal<string>("");
-	const selectedCell = useSignal<{ row: number; col: number } | null>(null);  // TODO : Make this default 
+	const selectedCell = useSignal<{ row: number; col: number } | null>(null); // TODO : Make this default
 	const modifiableIndices = useSignal<{ row: number; col: number }[]>([]);
 	const correctLetters = useSignal<Record<string, number>>({});
 	const answerKey = useSignal<string[][]>([]);
+	const triesLeft = useSignal(6);
+	const elapsedTime = useSignal(0);
+	const gameComplete = useSignal(false);
+
+	useEffect(() => {
+		const timer = setInterval(() => {
+			if (!gameComplete.value) {
+				elapsedTime.value += 1;
+			}
+		}, 1000);
+
+		return () => clearInterval(timer);
+	}, []);
 
 	const fetchGridData = async () => {
 		try {
@@ -59,7 +72,6 @@ export default function GridGame() {
 			letter_bank = randomizeString(letter_bank, 42);
 			letterBank.value = letter_bank;
 			answerKey.value = answerGrid; // Save the correct answer key
-
 		} catch (error) {
 			console.error("Error fetching grid data:", error);
 		}
@@ -70,7 +82,7 @@ export default function GridGame() {
 	}, []);
 
 	const handleKeyPress = (e: KeyboardEvent) => {
-		if (e.key === 'Enter') {
+		if (e.key === "Enter") {
 			handleSubmit();
 			return;
 		}
@@ -82,7 +94,7 @@ export default function GridGame() {
 				if (e.key === "ArrowUp") {
 					for (let new_row = row - 1; new_row >= 0; new_row--) {
 						const isModifiable = modifiableIndices.value.some(
-							(index) => index.row === new_row && index.col === col
+							(index) => index.row === new_row && index.col === col,
 						);
 						if (isModifiable) {
 							selectedCell.value = { row: new_row, col };
@@ -92,7 +104,7 @@ export default function GridGame() {
 				} else if (e.key === "ArrowDown") {
 					for (let new_row = row + 1; new_row < gridSize.value.rows; new_row++) {
 						const isModifiable = modifiableIndices.value.some(
-							(index) => index.row === new_row && index.col === col
+							(index) => index.row === new_row && index.col === col,
 						);
 						if (isModifiable) {
 							selectedCell.value = { row: new_row, col };
@@ -102,7 +114,7 @@ export default function GridGame() {
 				} else if (e.key === "ArrowLeft") {
 					for (let new_col = col - 1; new_col >= 0; new_col--) {
 						const isModifiable = modifiableIndices.value.some(
-							(index) => index.row === row && index.col === new_col
+							(index) => index.row === row && index.col === new_col,
 						);
 						if (isModifiable) {
 							selectedCell.value = { row, col: new_col };
@@ -112,7 +124,7 @@ export default function GridGame() {
 				} else if (e.key === "ArrowRight") {
 					for (let new_col = col + 1; new_col < gridSize.value.cols; new_col++) {
 						const isModifiable = modifiableIndices.value.some(
-							(index) => index.row === row && index.col === new_col
+							(index) => index.row === row && index.col === new_col,
 						);
 						if (isModifiable) {
 							selectedCell.value = { row, col: new_col };
@@ -121,45 +133,46 @@ export default function GridGame() {
 					}
 				}
 
-				const directions: {[key: string]: {primary: Array<number>, secondary: Array<Array<number>>}} = {
+				const directions: { [key: string]: { primary: Array<number>; secondary: Array<Array<number>> } } = {
 					ArrowUp: {
 						primary: [-1, 0],
 						secondary: [
 							[0, -1], // Up and Left
-							[0, 1]  // Up and Right
-						]
+							[0, 1], // Up and Right
+						],
 					},
 					ArrowDown: {
 						primary: [1, 0],
 						secondary: [
 							[0, -1], // Down and Left
-							[0, 1]  // Down and Right
-						]
+							[0, 1], // Down and Right
+						],
 					},
 					ArrowLeft: {
 						primary: [0, -1],
 						secondary: [
 							[-1, 0], // Left and Up
-							[1, 0]  // Left and Down
-						]
+							[1, 0], // Left and Down
+						],
 					},
 					ArrowRight: {
 						primary: [0, 1],
 						secondary: [
 							[-1, 0], // Right and Up
-							[1, 0]  // Right and Down
-						]
-					}
+							[1, 0], // Right and Down
+						],
+					},
 				};
-			
+
 				const move = directions[e.key];
 				if (move) {
 					// Prioritize moving in the same direction regardless of distance
 					const primaryTargets = modifiableIndices.value.filter(
-						(index) => (index.row - row) * move.primary[0] > 0 && (index.col - col) * move.primary[1] > 0 &&
-								   (index.row - row) * move.primary[1] === 0 && (index.col - col) * move.primary[0] === 0
+						(index) =>
+							(index.row - row) * move.primary[0] > 0 && (index.col - col) * move.primary[1] > 0 &&
+							(index.row - row) * move.primary[1] === 0 && (index.col - col) * move.primary[0] === 0,
 					);
-			
+
 					if (primaryTargets.length > 0) {
 						const closestPrimary = primaryTargets.reduce((closest, current) => {
 							const closestDistance = Math.abs(closest.row - row) + Math.abs(closest.col - col);
@@ -169,12 +182,12 @@ export default function GridGame() {
 						selectedCell.value = { row: closestPrimary.row, col: closestPrimary.col };
 						return;
 					}
-			
+
 					// Check primary direction step by step
 					for (let distance = 1; distance < Math.max(gridSize.value.rows, gridSize.value.cols); distance++) {
 						const primaryRow = row + move.primary[0] * distance;
 						const primaryCol = col + move.primary[1] * distance;
-			
+
 						if (
 							primaryRow >= 0 &&
 							primaryRow < gridSize.value.rows &&
@@ -182,21 +195,25 @@ export default function GridGame() {
 							primaryCol < gridSize.value.cols
 						) {
 							const isPrimaryModifiable = modifiableIndices.value.some(
-								(index) => index.row === primaryRow && index.col === primaryCol
+								(index) => index.row === primaryRow && index.col === primaryCol,
 							);
-			
+
 							if (isPrimaryModifiable) {
 								selectedCell.value = { row: primaryRow, col: primaryCol };
 								return;
 							}
 						}
-			
+
 						// Check secondary directions if primary fails
 						for (const sec of move.secondary) {
-							for (let secondaryDistance = 1; secondaryDistance < Math.max(gridSize.value.rows, gridSize.value.cols); secondaryDistance++) {
+							for (
+								let secondaryDistance = 1;
+								secondaryDistance < Math.max(gridSize.value.rows, gridSize.value.cols);
+								secondaryDistance++
+							) {
 								const secondaryRow = row + move.primary[0] * distance + sec[0] * secondaryDistance;
 								const secondaryCol = col + move.primary[1] * distance + sec[1] * secondaryDistance;
-			
+
 								if (
 									secondaryRow >= 0 &&
 									secondaryRow < gridSize.value.rows &&
@@ -204,9 +221,9 @@ export default function GridGame() {
 									secondaryCol < gridSize.value.cols
 								) {
 									const isSecondaryModifiable = modifiableIndices.value.some(
-										(index) => index.row === secondaryRow && index.col === secondaryCol
+										(index) => index.row === secondaryRow && index.col === secondaryCol,
 									);
-			
+
 									if (isSecondaryModifiable) {
 										selectedCell.value = { row: secondaryRow, col: secondaryCol };
 										return;
@@ -217,7 +234,7 @@ export default function GridGame() {
 					}
 				}
 				return;
-			}			
+			}
 
 			const isModifiable = modifiableIndices.value.some(
 				(index) => index.row === row && index.col === col,
@@ -238,6 +255,10 @@ export default function GridGame() {
 	};
 
 	const handleSubmit = () => {
+		if (!gameComplete.value) {
+			triesLeft.value--;
+		}
+
 		const currentGrid = grid.value.map((row) => row.map((cell) => cell.letter || ""));
 		const mistakes: Array<{ row: number; col: number }> = [];
 		const correctUsage: Record<string, number> = {}; // Track correct letter usage
@@ -263,13 +284,19 @@ export default function GridGame() {
 		correctLetters.value = correctUsage;
 
 		if (mistakes.length === 0) {
+			gameComplete.value = true;
 			alert("Congratulations! You completed the grid correctly.");
+		} else if (triesLeft.value == 0) {
+			gameComplete.value = true;
+			// modifiableIndices.value = [];
+			selectedCell.value = null;
+			grid.value = answerKey.value.map((row) => row.map((letter) => ({ letter })));
 		} else {
 			alert(`Some cells are incorrect. Number of mistakes: ${mistakes.length}. Keep trying!`);
 		}
 	};
 
-	const correctLettersCopy = JSON.parse(JSON.stringify(correctLetters.value));
+	const correctLettersCopy = JSON.parse(JSON.stringify(correctLetters.value)); // this is needed for the Letter Bank
 
 	return (
 		<div
@@ -285,9 +312,8 @@ export default function GridGame() {
     grid-auto-flow: column;
     overflow-x: auto;
   `}
-			>	
-				{
-				letterBank.value.split("").map((letter, index) => {
+			>
+				{letterBank.value.split("").map((letter, index) => {
 					let shouldStrikeThrough = false;
 					if (correctLettersCopy[letter]) {
 						shouldStrikeThrough = true;
@@ -307,42 +333,57 @@ export default function GridGame() {
 				})}
 			</div>
 
-			{/* Editable Grid */}
-			<div
-				class="grid gap-1 mb-4"
-				style={`grid-template-columns: repeat(${gridSize.value.cols}, 1fr)`}
-			>
-				{grid.value.map((row, rowIndex) =>
-					row.map((cell, colIndex) => {
-						const isSelected = selectedCell.value?.row === rowIndex &&
-							selectedCell.value?.col === colIndex;
+			{/* Stopwatch, Editable Grid, and Tries Left Display */}
+			<div class="flex">
+				{/* Stopwatch */}
+				<div class="mr-4 flex flex-col items-center justify-center">
+					<p class="text-lg font-bold text-gray-800">Elapsed Time</p>
+					<p class="text-2xl text-blue-600">{seconds_to_display_string(elapsedTime.value)}</p>
+				</div>
 
-						const isModifiable = modifiableIndices.value.some(
-							(index) => index.row === rowIndex && index.col === colIndex,
-						);
+				{/* Editable Grid */}
+				<div
+					class="grid gap-1 mb-4"
+					style={`grid-template-columns: repeat(${gridSize.value.cols}, 1fr)`}
+				>
+					{grid.value.map((row, rowIndex) =>
+						row.map((cell, colIndex) => {
+							const isSelected = selectedCell.value?.row === rowIndex &&
+								selectedCell.value?.col === colIndex;
 
-						let backgroundColor = "bg-white";
-						if (isSelected && isModifiable) {
-							backgroundColor = "bg-yellow-200";
-						} else if (isModifiable) {
-							backgroundColor = "bg-gray-200";
-						} else if (!isModifiable && cell.letter) {
-							backgroundColor = "bg-gray-300";
-						}
+							const isModifiable = modifiableIndices.value.some(
+								(index) => index.row === rowIndex && index.col === colIndex,
+							);
 
-						return (
-							<div
-								class={`flex items-center justify-center border border-gray-400 text-black h-10 w-10 cursor-pointer ${backgroundColor}`}
-								key={`${rowIndex}-${colIndex}`}
-								onClick={() => {
-									selectedCell.value = { row: rowIndex, col: colIndex };
-								}}
-							>
-								{cell.letter}
-							</div>
-						);
-					})
-				)}
+							let backgroundColor = "bg-white";
+							if (isSelected && isModifiable) {
+								backgroundColor = "bg-yellow-200";
+							} else if (isModifiable) {
+								backgroundColor = "bg-gray-200";
+							} else if (!isModifiable && cell.letter) {
+								backgroundColor = "bg-gray-300";
+							}
+
+							return (
+								<div
+									class={`flex items-center justify-center border border-gray-400 text-black h-10 w-10 cursor-pointer ${backgroundColor}`}
+									key={`${rowIndex}-${colIndex}`}
+									onClick={() => {
+										selectedCell.value = { row: rowIndex, col: colIndex };
+									}}
+								>
+									{cell.letter}
+								</div>
+							);
+						})
+					)}
+				</div>
+
+				{/* Tries Left Display */}
+				<div class="ml-4 flex flex-col items-center justify-center">
+					<p class="text-lg font-bold text-gray-800">Tries Left</p>
+					<p class="text-2xl text-red-600">{triesLeft.value}</p>
+				</div>
 			</div>
 
 			{/* Submit Button */}
