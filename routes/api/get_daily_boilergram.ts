@@ -1,8 +1,12 @@
 import { Handlers } from "$fresh/server.ts";
 import { getTodaysDate, runBoilergramsMakerScript } from "../../utils/utils.ts";
+import { logger } from "../../utils/logger.ts";
 
 export const handler: Handlers = {
 	async GET(_req) {
+
+		logger.info("New User!");
+
 		const todaysDate = getTodaysDate();
 
 		const responseBody = await runBoilergramsMakerScript(todaysDate);

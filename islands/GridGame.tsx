@@ -6,7 +6,7 @@ export default function GridGame() {
 	const gridSize = useSignal({ rows: 0, cols: 0 });
 	const grid = useSignal<{ letter: string }[][]>([]);
 	const letterBank = useSignal<string>("");
-	const selectedCell = useSignal<{ row: number; col: number } | null>(null); // TODO : Make this default
+	const selectedCell = useSignal<{ row: number; col: number } | null>(null);
 	const modifiableIndices = useSignal<{ row: number; col: number }[]>([]);
 	const correctLetters = useSignal<Record<string, number>>({});
 	const answerKey = useSignal<string[][]>([]);
@@ -68,6 +68,7 @@ export default function GridGame() {
 			}
 
 			grid.value = tempGrid;
+			selectedCell.value = modifiableIndices.value[0];
 			letter_bank = letter_bank.toUpperCase();
 			letter_bank = randomizeString(letter_bank, 42);
 			letterBank.value = letter_bank;
