@@ -1,5 +1,5 @@
 export async function runBoilergramsMakerScript(seed: number): Promise<string> {
-	const scriptPath = "utils/boilergrams_maker/boilergrams.py";
+	const scriptPath = "./utils/boilergrams_maker/boilergrams.py";
 
 	const process = new Deno.Command("python3", {
 		args: [scriptPath, String(seed)],

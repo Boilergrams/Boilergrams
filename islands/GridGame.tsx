@@ -26,7 +26,7 @@ export default function GridGame() {
 
 	const fetchGridData = async () => {
 		try {
-			const res = await fetch("http://localhost:8000/api/get_daily_boilergram");
+			const res = await fetch("http://localhost/api/get_daily_boilergram");
 			const data = await res.json();
 
 			const dimensions = data.dimensions;
