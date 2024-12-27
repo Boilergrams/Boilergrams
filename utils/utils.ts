@@ -1,3 +1,5 @@
+export const host = "https://boilergrams.deno.dev/"
+
 export async function runBoilergramsMakerScript(seed: number): Promise<string> {
 	const scriptPath = "./utils/boilergrams_maker/boilergrams.py";
 

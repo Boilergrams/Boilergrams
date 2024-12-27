@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import { isDigit, isLowerCase, randomizeString, seconds_to_display_string } from "../utils/utils.ts";
+import { isDigit, isLowerCase, randomizeString, seconds_to_display_string, host } from "../utils/utils.ts";
 
 export default function GridGame() {
 	const gridSize = useSignal({ rows: 0, cols: 0 });
@@ -26,7 +26,7 @@ export default function GridGame() {
 
 	const fetchGridData = async () => {
 		try {
-			const res = await fetch("http://localhost/api/get_daily_boilergram");
+			const res = await fetch(host + "api/get_daily_boilergram");
 			const data = await res.json();
 
 			const dimensions = data.dimensions;
