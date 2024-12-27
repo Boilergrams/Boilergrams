@@ -9,7 +9,14 @@ export const handler: Handlers = {
 
 		const todaysDate = getTodaysDate();
 
-		const responseBody = await runBoilergramsMakerScript(todaysDate);
+		// const responseBody = await runBoilergramsMakerScript(todaysDate);
+		const responseBody = {
+			"dimensions": [
+				8,
+				7
+			],
+			"data": "mUsCLE3N5RaTHer2p5eSTAtE2H4pRotEST2T4"
+		}
 
 		return new Response(JSON.stringify(responseBody), {
 			status: 200,
