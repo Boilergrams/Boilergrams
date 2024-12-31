@@ -1,9 +1,10 @@
-# Fresh project
+# Boilergrams
 
-Your new Fresh project is ready to go. You can follow the Fresh "Getting
-Started" guide here: https://fresh.deno.dev/docs/getting-started
+Derived from a Hackathon I won: https://devpost.com/software/boilergrams
 
 ### Usage
+
+Made using Fresh and deployed with DenoDeploy. Learn about it here https://fresh.deno.dev/docs/getting-started
 
 Make sure to install Deno: https://deno.land/manual/getting_started/installation
 

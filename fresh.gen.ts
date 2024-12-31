@@ -4,7 +4,6 @@
 
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
-import * as $about from "./routes/about.tsx";
 import * as $api_get_daily_boilergram from "./routes/api/get_daily_boilergram.ts";
 import * as $index from "./routes/index.tsx";
 import * as $GridGame from "./islands/GridGame.tsx";
@@ -14,7 +13,6 @@ const manifest = {
 	routes: {
 		"./routes/_404.tsx": $_404,
 		"./routes/_app.tsx": $_app,
-		"./routes/about.tsx": $about,
 		"./routes/api/get_daily_boilergram.ts": $api_get_daily_boilergram,
 		"./routes/index.tsx": $index,
 	},
