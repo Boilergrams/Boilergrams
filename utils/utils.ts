@@ -1,5 +1,14 @@
-export const host = "https://boilergrams.deno.dev/"
-// export const host = "http://localhost:8000/"
+export async function getBoilergramfromJSON(index: number): Promise<unknown> {
+	try {
+		const filePath = "./utils/boilergrams.json";
+
+		const data = JSON.parse(await Deno.readTextFile(filePath));
+
+		return JSON.parse(data[index]);
+	} catch (error) {
+		console.error(`Error reading JSON or accessing index: ${error}`);
+	}
+}
 
 export async function runBoilergramsMakerScript(seed: number): Promise<string> {
 	const scriptPath = "./utils/boilergrams_maker/boilergrams.py";

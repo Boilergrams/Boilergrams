@@ -1,6 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useEffect } from "preact/hooks";
-import { isDigit, isLowerCase, randomizeString, seconds_to_display_string, host } from "../utils/utils.ts";
+import { isDigit, isLowerCase, randomizeString, seconds_to_display_string } from "../utils/utils.ts";
 
 export default function GridGame() {
 	const gridSize = useSignal({ rows: 0, cols: 0 });
@@ -14,7 +14,7 @@ export default function GridGame() {
 	const elapsedTime = useSignal(0);
 	const gameComplete = useSignal(false);
 
-	useEffect(() => {
+	useEffect(() => { // makes this run every one second
 		const timer = setInterval(() => {
 			if (!gameComplete.value) {
 				elapsedTime.value += 1;
@@ -26,7 +26,7 @@ export default function GridGame() {
 
 	const fetchGridData = async () => {
 		try {
-			const res = await fetch(host + "api/get_daily_boilergram");
+			const res = await fetch("/api/get_daily_boilergram");
 			const data = await res.json();
 
 			const dimensions = data.dimensions;
@@ -78,7 +78,7 @@ export default function GridGame() {
 		}
 	};
 
-	useEffect(() => {
+	useEffect(() => { // makes this run only once at the start
 		fetchGridData();
 	}, []);
 
@@ -323,8 +323,8 @@ export default function GridGame() {
 
 					return (
 						<div
-							class={`flex items-center justify-center border border-gray-400 bg-white text-black h-10 w-10 ${
-								shouldStrikeThrough ? "line-through" : ""
+							class={`flex items-center justify-center border border-gray-400 h-10 w-10 text-black ${
+								shouldStrikeThrough ? "bg-gray-300 bg-opacity-50 line-through" : "bg-white"
 							}`}
 							key={index}
 						>

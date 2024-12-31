@@ -12,3 +12,9 @@ node_modules/
 
 # logger
 logs/
+
+# temporary files
+temp/
+
+# pycache
+utils/boilergrams_maker/__pycache__/
