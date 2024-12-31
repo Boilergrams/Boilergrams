@@ -4,11 +4,11 @@ const logLevel = "info";
 const logFilePath = "./logs/log.log";
 
 const formatTimestamp = (): string => {
-	return new Date().toLocaleString()
+	return new Date().toLocaleString();
 };
 
 export const logger: Logger = createLogger({
-  level: logLevel,
+	level: logLevel,
 	format: format.combine(
 		format.timestamp({
 			format: formatTimestamp,
@@ -19,5 +19,3 @@ export const logger: Logger = createLogger({
 		new transports.File({ filename: logFilePath, options: { flags: "a" } }),
 	],
 });
-
-
