@@ -9,7 +9,7 @@ export const handler: Handlers = {
 		const todaysDate = getTodaysDate();
 
 		// const responseBody = await runBoilergramsMakerScript(todaysDate);
-		const responseBody = await getBoilergramfromJSON(todaysDate + 9);
+		const responseBody = await getBoilergramfromJSON(todaysDate);
 
 		return new Response(JSON.stringify(responseBody), {
 			status: 200,
