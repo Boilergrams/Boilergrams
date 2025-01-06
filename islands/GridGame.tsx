@@ -257,43 +257,41 @@ export default class GridGame extends Component<unknown, GameState> {
     }
   }
 
+  private checkGrid() {
+    const mistakes: GridIndex[] = [];
+    const correctUsage: Record<string, number> = {};
+
+    for (let i = 0; i < this.state.modifiableIndices.length; i++) {
+      const gridIdx: GridIndex = this.state.modifiableIndices[i];
+      const userLetter = this.state.grid[gridIdx.row][gridIdx.col].letter;
+      const correctLetter = this.state.answerKey[gridIdx.row][gridIdx.col];
+
+      if (correctLetter === userLetter) {
+        correctUsage[userLetter] = (correctUsage[userLetter] || 0) + 1;
+      } else {
+        mistakes.push({ row: gridIdx.row, col: gridIdx.col });
+      }
+    }
+
+    return { mistakes, correctUsage };
+  }
+
   /** Checks the user’s grid against the answer key, updates tries/correct usage. */
   private handleSubmit() {
-    const { gameComplete, triesLeft, grid, answerKey, modifiableIndices } =
-      this.state;
+    const { gameComplete, triesLeft, answerKey } = this.state;
     if (gameComplete) return;
 
     // Decrement tries left
     const newTriesLeft = triesLeft - 1;
 
-    // Evaluate the current grid vs. the answer key
-    const mistakes: GridIndex[] = [];
-    const correctUsage: Record<string, number> = {};
-
-    grid.forEach((row, rowIndex) => {
-      row.forEach((cell, colIndex) => {
-        const correctLetter = answerKey[rowIndex][colIndex];
-        const isModifiable = modifiableIndices.some(
-          (idx) => idx.row === rowIndex && idx.col === colIndex
-        );
-
-        if (cell.letter === correctLetter) {
-          if (isModifiable) {
-            correctUsage[cell.letter] = (correctUsage[cell.letter] || 0) + 1;
-          }
-        } else {
-          mistakes.push({ row: rowIndex, col: colIndex });
-        }
-      });
-    });
+    // Use checkGrid to evaluate the current grid
+    const { mistakes, correctUsage } = this.checkGrid();
 
     // Check if puzzle is solved or out of tries
     if (mistakes.length === 0) {
-      // All correct => puzzle complete
       alert("Congratulations! You completed the grid correctly.");
       this.setState({ gameComplete: true, correctLetters: correctUsage });
     } else if (newTriesLeft === 0) {
-      // Out of tries => show correct grid
       alert("No more tries left. Revealing the correct solution.");
       const revealedGrid = answerKey.map((row) =>
         row.map((letter) => ({ letter }))
@@ -322,7 +320,6 @@ export default class GridGame extends Component<unknown, GameState> {
       letterBank,
       correctLetters,
       elapsedTime,
-      rows,
       cols,
       selectedCell,
       modifiableIndices,
