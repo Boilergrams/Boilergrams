@@ -98,69 +98,80 @@ export default class GridGame extends Component<unknown, GameState> {
     document.removeEventListener("keydown", this.handleKeyPress);
   }
 
-  /** Fetches daily puzzle data, sets up the grid, letter bank, and answer key. */
+  /**
+   * Decodes a puzzle string into a grid, a set of modifiable indices,
+   * and populates an answer key.
+   */
+  private decodeGridData(
+    data: string,
+    userGrid: GridCell[][],
+    answerKey: string[][],
+    cols: number
+  ): { modifiableIndices: GridIndex[]; letterBank: string } {
+    const modifiableIndices: GridIndex[] = [];
+    let letterBank = "";
+    let counter = 0;
+
+    for (let i = 0; i < data.length; i++) {
+      const letter = data[i];
+      const rowIndex = Math.floor(counter / cols);
+      const colIndex = counter % cols;
+
+      if (isDigit(letter)) {
+        // A digit means "skip this many empty cells in the grid"
+        counter += Number(letter);
+      } else if (isLowerCase(letter)) {
+        // Lowercase means "user can fill in this letter"
+        letterBank += letter;
+        modifiableIndices.push({ row: rowIndex, col: colIndex });
+        answerKey[rowIndex][colIndex] = letter.toUpperCase();
+        counter++; // Move to next grid cell
+      } else {
+        // Otherwise, it's a fixed letter
+        userGrid[rowIndex][colIndex] = { letter };
+        answerKey[rowIndex][colIndex] = letter;
+        counter++; // Move to next grid cell
+      }
+    }
+
+    return { modifiableIndices, letterBank };
+  }
+
+  /**
+   * Fetches daily puzzle data, sets up the grid, letter bank, and answer key.
+   */
   private async fetchGridData() {
     try {
       const res = await fetch("/api/get_daily_boilergram");
       const data = await res.json();
 
       const [rows, cols] = data.dimensions;
+      const userGrid: GridCell[][] = Array.from({ length: rows }, () =>
+        Array(cols).fill("")
+      );
+      const answerKey: string[][] = Array.from({ length: rows }, () =>
+        Array(cols).fill("")
+      );
 
-      // Create empty 2D arrays for displayed grid and answer key
-      const tempGrid: GridCell[][] = Array(rows)
-        .fill(null)
-        .map(() => Array(cols).fill({ letter: "" }));
+      // Decode grid data
+      const { modifiableIndices, letterBank: rawLetterBank } =
+        this.decodeGridData(data.data, userGrid, answerKey, cols);
 
-      const answerGrid: string[][] = Array(rows)
-        .fill(null)
-        .map(() => Array(cols).fill(""));
+      // Shuffle & uppercase letter bank
+      let letterBank = rawLetterBank.toUpperCase();
+      letterBank = randomizeString(letterBank, 42);
 
-      // We'll keep track of which cells can be modified by the user
-      const modifiableIndices: GridIndex[] = [];
-
-      const letters: string = data.data;
-      let letter_bank = "";
-      let counter = 0;
-
-      for (let i = 0; i < letters.length; i++) {
-        const letter = letters[i];
-        const rowIndex = Math.floor(counter / cols);
-        const colIndex = counter % cols;
-
-        if (isDigit(letter)) {
-          // A digit means "skip this many cells".
-          counter += Number(letter);
-        } else {
-          if (isLowerCase(letter)) {
-            // Lowercase means "user can fill in this letter"
-            letter_bank += letter;
-            modifiableIndices.push({ row: rowIndex, col: colIndex });
-            answerGrid[rowIndex][colIndex] = letter.toUpperCase();
-            counter++;
-          } else {
-            // Uppercase means "pre-filled letter"
-            tempGrid[rowIndex][colIndex] = { letter };
-            answerGrid[rowIndex][colIndex] = letter;
-            counter++;
-          }
-        }
-      }
-
-      // Shuffle the letters to create the letter bank
-      letter_bank = letter_bank.toUpperCase();
-      letter_bank = randomizeString(letter_bank, 42);
-
-      // Initialize the selected cell to the first modifiable spot (if any)
+      // Initialize selected cell to the first modifiable spot
       const selectedCell =
         modifiableIndices.length > 0 ? modifiableIndices[0] : null;
 
       this.setState({
         rows,
         cols,
-        grid: tempGrid,
-        letterBank: letter_bank,
+        grid: userGrid,
+        letterBank,
         modifiableIndices,
-        answerKey: answerGrid,
+        answerKey,
         selectedCell,
       });
     } catch (error) {
