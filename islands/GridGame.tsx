@@ -179,87 +179,80 @@ export default class GridGame extends Component<unknown, GameState> {
     }
   }
 
-  /** Called when the user presses any key. Handles arrow movement & letter entry. */
+  private findNextArrow(
+    row: number,
+    col: number,
+    key: string
+  ): GridIndex | null {
+    const dirs: Map<string, [number, number]> = new Map([
+      ["ArrowUp", [-1, 0]],
+      ["ArrowDown", [1, 0]],
+      ["ArrowRight", [0, 1]],
+      ["ArrowLeft", [0, -1]],
+    ]);
+    if (!key) {
+      throw new Error("Key is empty in findNextArrow!");
+    }
+
+    const dir = dirs.get(key);
+    if (!dir) return null;
+
+    const [dRow, dCol] = dir;
+    let currRow = row + dRow;
+    let currCol = col + dCol;
+
+    while (
+      currRow >= 0 &&
+      currRow < this.state.rows &&
+      currCol >= 0 &&
+      currCol < this.state.cols
+    ) {
+      if (
+        this.state.modifiableIndices.some(
+          (idx) => idx.row === currRow && idx.col === currCol
+        )
+      ) {
+        return { row: currRow, col: currCol };
+      }
+      currRow += dRow;
+      currCol += dCol;
+    }
+
+    return null;
+  }
+
   private handleKeyPress(e: KeyboardEvent) {
-    // Let Enter finalize the submission
     if (e.key === "Enter") {
       this.handleSubmit();
       return;
     }
 
-    const { selectedCell, modifiableIndices, grid, rows, cols } = this.state;
+    const { selectedCell, modifiableIndices, grid } = this.state;
     if (!selectedCell) return;
 
     const { row, col } = selectedCell;
 
-    // --- 1) Check for arrow movement ---
+    // 1) check for arrow movement
     if (e.key.startsWith("Arrow")) {
-      e.preventDefault(); // prevent browser scrolling
+      e.preventDefault();
 
-      // We’ll attempt to find another modifiable cell in the direction of the arrow
-      if (e.key === "ArrowUp") {
-        for (let new_row = row - 1; new_row >= 0; new_row--) {
-          if (
-            modifiableIndices.some(
-              (idx) => idx.row === new_row && idx.col === col
-            )
-          ) {
-            this.setState({ selectedCell: { row: new_row, col } });
-            return;
-          }
-        }
-      } else if (e.key === "ArrowDown") {
-        for (let new_row = row + 1; new_row < rows; new_row++) {
-          if (
-            modifiableIndices.some(
-              (idx) => idx.row === new_row && idx.col === col
-            )
-          ) {
-            this.setState({ selectedCell: { row: new_row, col } });
-            return;
-          }
-        }
-      } else if (e.key === "ArrowLeft") {
-        for (let new_col = col - 1; new_col >= 0; new_col--) {
-          if (
-            modifiableIndices.some(
-              (idx) => idx.row === row && idx.col === new_col
-            )
-          ) {
-            this.setState({ selectedCell: { row, col: new_col } });
-            return;
-          }
-        }
-      } else if (e.key === "ArrowRight") {
-        for (let new_col = col + 1; new_col < cols; new_col++) {
-          if (
-            modifiableIndices.some(
-              (idx) => idx.row === row && idx.col === new_col
-            )
-          ) {
-            this.setState({ selectedCell: { row, col: new_col } });
-            return;
-          }
-        }
+      const nextCell: GridIndex | null = this.findNextArrow(row, col, e.key);
+      if (nextCell) {
+        this.setState({ selectedCell: nextCell });
       }
       return;
     }
 
-    // --- 2) Check for letter or backspace updates ---
-    // Is the selectedCell modifiable?
-    const isModifiable = modifiableIndices.some(
-      (idx) => idx.row === row && idx.col === col
-    );
-    if (!isModifiable) return;
+    // 2) Handle letter input or deletion
+    if (!modifiableIndices.some((idx) => idx.row === row && idx.col === col)) {
+      return;
+    }
 
-    const updatedGrid = grid.map((r) => r.map((cell) => ({ ...cell })));
-    if (e.key.length === 1 && /[a-zA-Z]/.test(e.key)) {
-      // Insert the typed letter
-      updatedGrid[row][col].letter = e.key.toUpperCase();
-      this.setState({ grid: updatedGrid });
-    } else if (e.key === "Backspace") {
-      // Clear the letter
-      updatedGrid[row][col].letter = "";
+    const updatedGrid = grid.map((row) => row.map((cell) => ({ ...cell })));
+    const isLetterKey = e.key.length === 1 && /[a-zA-Z]/.test(e.key);
+
+    if (isLetterKey || e.key === "Backspace") {
+      updatedGrid[row][col].letter = isLetterKey ? e.key.toUpperCase() : "";
       this.setState({ grid: updatedGrid });
     }
   }
