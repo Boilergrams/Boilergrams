@@ -14,6 +14,20 @@ export default function GridGame() {
 	const elapsedTime = useSignal(0);
 	const gameComplete = useSignal(false);
 
+	useEffect(() => {
+        const preventScroll = (event: KeyboardEvent) => {
+            if (event.key === "ArrowUp" || event.key === "ArrowDown" || event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+            }
+        };
+
+        self.addEventListener("keydown", preventScroll);
+
+        return () => {
+            self.removeEventListener("keydown", preventScroll);
+        };
+    }, []);
+
 	useEffect(() => { // makes this run every one second
 		const timer = setInterval(() => {
 			if (!gameComplete.value) {
@@ -357,17 +371,22 @@ export default function GridGame() {
 							);
 
 							let backgroundColor = "bg-white";
+							let borderStyle = "border-gray-100 border-2";
+
 							if (isSelected && isModifiable) {
 								backgroundColor = "bg-yellow-200";
+								borderStyle = "border-gray-400 border-2";
 							} else if (isModifiable) {
 								backgroundColor = "bg-gray-200";
+								borderStyle = "border-gray-400 border-2";
 							} else if (!isModifiable && cell.letter) {
-								backgroundColor = "bg-gray-300";
+								backgroundColor = "bg-gray-200";
+								borderStyle = "border-gray-200 border-2";
 							}
 
 							return (
 								<div
-									class={`flex items-center justify-center border border-gray-400 text-black h-10 w-10 cursor-pointer ${backgroundColor}`}
+									class={`flex items-center justify-center ${borderStyle} text-black h-10 w-10 cursor-pointer ${backgroundColor}`}
 									key={`${rowIndex}-${colIndex}`}
 									onClick={() => {
 										selectedCell.value = { row: rowIndex, col: colIndex };
