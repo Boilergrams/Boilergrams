@@ -313,9 +313,9 @@ export default class GridGame extends Component<unknown, GameState> {
     const correctLettersCopy: Record<string, number> = { ...correctLetters };
 
     return (
-      <div class="flex flex-col items-center min-h-screen" tabIndex={0}>
+      <div class="flex flex-col items-center">
         {/* Letter Bank */}
-        <div class="flex gap-2 m-4">
+        <div class="flex flex-wrap justify-center gap-1 px-4 mb-2">
           {letterBank.split("").map((letter, index) => {
             let shouldStrikeThrough = false;
             if (correctLettersCopy[letter]) {
@@ -325,7 +325,7 @@ export default class GridGame extends Component<unknown, GameState> {
             return (
               <div
                 key={index}
-                class={`flex items-center justify-center border border-gray-400 h-10 w-10 text-black ${
+                class={`flex items-center justify-center border border-gray-400 h-8 w-8 text-black ${
                   shouldStrikeThrough
                     ? "bg-gray-300 bg-opacity-50 line-through"
                     : "bg-white"
@@ -338,27 +338,26 @@ export default class GridGame extends Component<unknown, GameState> {
         </div>
 
         {/* Main row: Stopwatch, Grid, Tries Left */}
-        <div class="flex flex-1 w-full items-center justify-center">
-          {/* Stopwatch */}
-          <div class="ml-4 mr-4 flex flex-col items-center justify-center">
-            <p class="text-lg font-bold text-gray-800">Elapsed Time</p>
-            <p class="text-2xl text-blue-600">
+        <div class="flex w-full items-center justify-center gap-8 px-2">
+          {/* Side panels */}
+          <div class="flex flex-col items-center justify-center">
+            <p class="text-sm font-bold text-gray-800">Time</p>
+            <p class="text-xl text-blue-600">
               {seconds_to_display_string(elapsedTime)}
             </p>
           </div>
 
-          {/* Editable Grid in a square container */}
+          {/* Grid */}
           <div
             class="
               relative 
-              max-w-[80vh] 
-              max-h-[80vh]
+              max-w-[65vh] 
+              max-h-[65vh]
               aspect-square 
               w-full 
               h-full 
               grid
               gap-1
-              mb-4
             "
             style={{
               gridTemplateColumns: `repeat(${cols}, 1fr)`,
@@ -403,15 +402,15 @@ export default class GridGame extends Component<unknown, GameState> {
           </div>
 
           {/* Tries Left Display */}
-          <div class="ml-4 mr-4 flex flex-col items-center justify-center">
-            <p class="text-lg font-bold text-gray-800">Tries Left</p>
-            <p class="text-2xl text-red-600">{triesLeft}</p>
+          <div class="flex flex-col items-center justify-center">
+            <p class="text-sm font-bold text-gray-800">Tries</p>
+            <p class="text-xl text-red-600">{triesLeft}</p>
           </div>
         </div>
 
         {/* Submit Button */}
         <button
-          class="px-4 py-2 mb-4 bg-blue-500 text-white rounded hover:bg-blue-600"
+          class="px-4 py-1 my-4 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={this.handleSubmit}
         >
           Submit Grid
