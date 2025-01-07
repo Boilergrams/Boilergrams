@@ -1,12 +1,3 @@
-/**
- * Example utilities that your code might be importing:
- *
- *   isDigit(letter: string) => boolean
- *   isLowerCase(letter: string) => boolean
- *   randomizeString(str: string, seed: number) => string
- *   seconds_to_display_string(seconds: number) => string
- */
-
 import { Component } from "preact";
 import {
   isDigit,
@@ -27,23 +18,14 @@ interface GridIndex {
 interface GameState {
   rows: number;
   cols: number;
-  // The 2D grid to display/edit
   grid: GridCell[][];
-  // The scrambled set of letters that can be used to fill the grid
   letterBank: string;
-  // A list of (row, col) that the user is allowed to modify
   modifiableIndices: GridIndex[];
-  // The correct answer grid (same shape as `grid`, used for checking correctness)
   answerKey: string[][];
-  // The user’s currently selected (row, col) in the grid
   selectedCell: GridIndex | null;
-  // Number of tries left
   triesLeft: number;
-  // Tracks how many times each letter in letterBank has been placed correctly
   correctLetters: Record<string, number>;
-  // Whether the puzzle is complete
   gameComplete: boolean;
-  // Elapsed time in seconds
   elapsedTime: number;
 }
 
@@ -320,6 +302,7 @@ export default class GridGame extends Component<unknown, GameState> {
       letterBank,
       correctLetters,
       elapsedTime,
+      rows,
       cols,
       selectedCell,
       modifiableIndices,
@@ -330,16 +313,9 @@ export default class GridGame extends Component<unknown, GameState> {
     const correctLettersCopy: Record<string, number> = { ...correctLetters };
 
     return (
-      <div class="flex flex-col items-center" tabIndex={0}>
+      <div class="flex flex-col items-center min-h-screen" tabIndex={0}>
         {/* Letter Bank */}
-        <div
-          class="grid gap-1 mb-4"
-          style={`
-            grid-template-columns: repeat(${letterBank.length}, 1fr);
-            grid-auto-flow: column;
-            overflow-x: auto;
-          `}
-        >
+        <div class="flex gap-2 m-4">
           {letterBank.split("").map((letter, index) => {
             let shouldStrikeThrough = false;
             if (correctLettersCopy[letter]) {
@@ -362,19 +338,32 @@ export default class GridGame extends Component<unknown, GameState> {
         </div>
 
         {/* Main row: Stopwatch, Grid, Tries Left */}
-        <div class="flex">
+        <div class="flex flex-1 w-full items-center justify-center">
           {/* Stopwatch */}
-          <div class="mr-4 flex flex-col items-center justify-center">
+          <div class="ml-4 mr-4 flex flex-col items-center justify-center">
             <p class="text-lg font-bold text-gray-800">Elapsed Time</p>
             <p class="text-2xl text-blue-600">
               {seconds_to_display_string(elapsedTime)}
             </p>
           </div>
 
-          {/* Editable Grid */}
+          {/* Editable Grid in a square container */}
           <div
-            class="grid gap-1 mb-4"
-            style={`grid-template-columns: repeat(${cols}, 1fr)`}
+            class="
+              relative 
+              max-w-[80vh] 
+              max-h-[80vh]
+              aspect-square 
+              w-full 
+              h-full 
+              grid
+              gap-1
+              mb-4
+            "
+            style={{
+              gridTemplateColumns: `repeat(${cols}, 1fr)`,
+              gridTemplateRows: `repeat(${rows}, 1fr)`,
+            }}
           >
             {grid.map((row, rowIndex) =>
               row.map((cell, colIndex) => {
@@ -397,9 +386,8 @@ export default class GridGame extends Component<unknown, GameState> {
                 return (
                   <div
                     key={`${rowIndex}-${colIndex}`}
-                    class={`flex items-center justify-center border border-gray-400 text-black h-10 w-10 cursor-pointer ${backgroundColor}`}
+                    class={`flex items-center justify-center border border-gray-400 text-black cursor-pointer ${backgroundColor}`}
                     onClick={() => {
-                      // Click to select the cell, if modifiable
                       if (isModifiable) {
                         this.setState({
                           selectedCell: { row: rowIndex, col: colIndex },
@@ -415,7 +403,7 @@ export default class GridGame extends Component<unknown, GameState> {
           </div>
 
           {/* Tries Left Display */}
-          <div class="ml-4 flex flex-col items-center justify-center">
+          <div class="ml-4 mr-4 flex flex-col items-center justify-center">
             <p class="text-lg font-bold text-gray-800">Tries Left</p>
             <p class="text-2xl text-red-600">{triesLeft}</p>
           </div>
@@ -423,7 +411,7 @@ export default class GridGame extends Component<unknown, GameState> {
 
         {/* Submit Button */}
         <button
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          class="px-4 py-2 mb-4 bg-blue-500 text-white rounded hover:bg-blue-600"
           onClick={this.handleSubmit}
         >
           Submit Grid
