@@ -2,8 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-
 /* Disable text selection and focus outline */
 *:focus {
-    outline: none; /* Removes the blue outline */
+	outline: none; /* Removes the blue outline */
 }
