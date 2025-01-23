@@ -18,7 +18,16 @@ export default function Home() {
 						className="text-[#CFB87C] no-underline"
 					>
 						Rushil Shah
+					</a>{" "}
+					and{" "}
+					<a
+						href="https://github.com/michaelyfu"
+						target="_blank"
+						className="text-[#CFB87C] no-underline"
+					>
+						Michael Fu
 					</a>
+					.
 				</p>
 				<p className="text-black">
 					This project is open-source! You can contribute or learn more{" "}
