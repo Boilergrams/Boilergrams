@@ -406,13 +406,13 @@ export default class GridGame extends Component<unknown, GameState> {
 							<div
 								class="
                   relative 
-                  max-w-[60vh] 
-                  max-h-[60vh]
+                  max-w-[65vh] 
+                  max-h-[65vh]
                   aspect-square 
                   w-full 
                   h-full 
                   grid
-                  gap-2
+                  gap-1
                 "
 								style={{
 									gridTemplateColumns: `repeat(${cols}, 1fr)`,
@@ -427,25 +427,22 @@ export default class GridGame extends Component<unknown, GameState> {
 											(idx) => idx.row === rowIndex && idx.col === colIndex,
 										);
 
-                    let backgroundColor = "bg-white";
-                    let borderStyle = "border-gray-100 border-2";
-      
-                    if (isSelected && isModifiable) {
-                      backgroundColor = "bg-yellow-200";
-                      borderStyle = "border-gray-400 border-2";
-                    } else if (isModifiable) {
-                      backgroundColor = "bg-gray-200";
-                      borderStyle = "border-gray-400 border-2";
-                    } else if (!isModifiable && cell.letter) {
-                      backgroundColor = "bg-gray-200";
-                      borderStyle = "border-gray-200 border-2";
-                    }
+										let backgroundColor = "bg-white";
+										if (isSelected && isModifiable) {
+                      // selected and not preset
+											backgroundColor = "bg-yellow-200";
+										} else if (isModifiable) {
+                      // is not a preset square
+											backgroundColor = "bg-gray-200";
+										} else if (!isModifiable && cell.letter) {
+                      // is a preset square
+											backgroundColor = "bg-gray-300";
+										}
 
 										return (
 											<div
 												key={`${rowIndex}-${colIndex}`}
-                        class={`flex items-center justify-center ${borderStyle} text-black h-auto w-auto cursor-pointer ${backgroundColor}`}
-												style={{ aspectRatio: "1 / 1" }}
+												class={`flex items-center justify-center border border-gray-400 text-black cursor-pointer ${backgroundColor}`}
 												onClick={() => {
 													if (isModifiable) {
 														this.setState({
