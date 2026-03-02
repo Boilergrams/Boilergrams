@@ -22,6 +22,7 @@ interface GameState {
 	correctLetters: Record<string, number>;
 	gameComplete: boolean;
 	elapsedTime: number;
+	isMobile: boolean;
 }
 
 export default class GridGame extends Component<unknown, GameState> {
@@ -43,6 +44,7 @@ export default class GridGame extends Component<unknown, GameState> {
 			correctLetters: {},
 			gameComplete: false,
 			elapsedTime: 0,
+			isMobile: false,
 		};
 
 		// bind event handler methods
@@ -52,6 +54,9 @@ export default class GridGame extends Component<unknown, GameState> {
 
 	override async componentDidMount() {
 		await this.fetchGridData();
+
+		const isMobile = globalThis.matchMedia("(max-width: 768px)").matches || "ontouchstart" in window;
+		this.setState({ isMobile });
 
 		// Start a 1-second timer to track elapsed time
 		this.timerId = globalThis.setInterval(() => {
@@ -350,6 +355,62 @@ export default class GridGame extends Component<unknown, GameState> {
 		}
 	}
 
+	private renderMobileKeyboard() {
+		const rows = [
+			"QWERTYUIOP".split(""),   // Row 1 (ends at P)
+			"ASDFGHJKL".split(""),    // Row 2 (ends at L)
+			"ZXCVBNM".split("")       // Row 3
+		];
+
+		return (
+			<div class="flex flex-col items-center gap-2 mt-4 px-2">
+				{rows.map((row, rowIndex) => (
+					<div key={rowIndex} class="flex justify-center gap-1">
+						{row.map((key) => (
+							<button
+								key={key}
+								class="w-8 h-10 bg-gray-200 rounded text-black font-bold active:bg-gray-400"
+								onClick={() =>
+									this.handleKeyPress(
+										new KeyboardEvent("keydown", { key })
+									)
+								}
+							>
+								{key}
+							</button>
+						))}
+						
+						{/* Add special keys only on last row */}
+						{rowIndex === 2 && (
+							<>
+								<button
+									class="px-3 h-10 bg-red-300 rounded active:bg-red-400"
+									onClick={() =>
+										this.handleKeyPress(
+											new KeyboardEvent("keydown", { key: "Backspace" })
+										)
+									}
+								>
+									⌫
+								</button>
+								<button
+									class="px-3 h-10 bg-blue-300 rounded active:bg-blue-400"
+									onClick={() =>
+										this.handleKeyPress(
+											new KeyboardEvent("keydown", { key: "Enter" })
+										)
+									}
+								>
+									Enter
+								</button>
+							</>
+						)}
+					</div>
+				))}
+			</div>
+		);
+	}
+
 	render() {
 		const {
 			grid,
@@ -389,91 +450,92 @@ export default class GridGame extends Component<unknown, GameState> {
 					})}
 				</div>
 
-				{/* Main row: Stopwatch, Grid, Tries Left */}
+				{/* Main row: Grid only */}
 				<div class="flex w-full items-center justify-center px-2">
-					{/* Side panels container */}
-					<div class="flex w-full justify-between">
-						{/* Stopwatch */}
-						<div class="flex flex-col items-center justify-center w-20">
-							<p class="text-sm font-bold text-gray-800">Time</p>
-							<p class="text-xl text-blue-600">
-								{seconds_to_display_string(elapsedTime)}
-							</p>
-						</div>
+					<div class="flex-grow flex justify-center items-center">
+						<div
+							class="
+								relative 
+								max-w-[65vh] 
+								max-h-[65vh]
+								aspect-square 
+								w-full 
+								h-full 
+								grid
+								gap-1
+							"
+							style={{
+								gridTemplateColumns: `repeat(${cols}, 1fr)`,
+								gridTemplateRows: `repeat(${rows}, 1fr)`,
+							}}
+						>
+							{grid.map((row, rowIndex) =>
+								row.map((cell, colIndex) => {
+									const isSelected =
+										selectedCell?.row === rowIndex &&
+										selectedCell?.col === colIndex;
 
-						{/* Grid */}
-						<div class="flex-grow flex justify-center items-center">
-							<div
-								class="
-                  relative 
-                  max-w-[65vh] 
-                  max-h-[65vh]
-                  aspect-square 
-                  w-full 
-                  h-full 
-                  grid
-                  gap-1
-                "
-								style={{
-									gridTemplateColumns: `repeat(${cols}, 1fr)`,
-									gridTemplateRows: `repeat(${rows}, 1fr)`,
-								}}
-							>
-								{grid.map((row, rowIndex) =>
-									row.map((cell, colIndex) => {
-										const isSelected = selectedCell?.row === rowIndex &&
-											selectedCell?.col === colIndex;
-										const isModifiable = modifiableIndices.some(
-											(idx) => idx.row === rowIndex && idx.col === colIndex,
-										);
+									const isModifiable = modifiableIndices.some(
+										(idx) => idx.row === rowIndex && idx.col === colIndex,
+									);
 
-										let backgroundColor = "bg-white";
-										if (isSelected && isModifiable) {
-                      // selected and not preset
-											backgroundColor = "bg-yellow-200";
-										} else if (isModifiable) {
-                      // is not a preset square
-											backgroundColor = "bg-gray-200";
-										} else if (!isModifiable && cell.letter) {
-                      // is a preset square
-											backgroundColor = "bg-gray-300";
-										}
+									let backgroundColor = "bg-white";
+									if (isSelected && isModifiable) {
+										backgroundColor = "bg-yellow-200";
+									} else if (isModifiable) {
+										backgroundColor = "bg-gray-200";
+									} else if (!isModifiable && cell.letter) {
+										backgroundColor = "bg-gray-300";
+									}
 
-										return (
-											<div
-												key={`${rowIndex}-${colIndex}`}
-												class={`flex items-center justify-center border border-gray-400 text-black cursor-pointer ${backgroundColor}`}
-												onClick={() => {
-													if (isModifiable) {
-														this.setState({
-															selectedCell: { row: rowIndex, col: colIndex },
-														});
-													}
-												}}
-											>
-												{cell.letter}
-											</div>
-										);
-									})
-								)}
-							</div>
-						</div>
-
-						{/* Tries Left Display */}
-						<div class="flex flex-col items-center justify-center w-20">
-							<p class="text-sm font-bold text-gray-800">Tries</p>
-							<p class="text-xl text-red-600">{triesLeft}</p>
+									return (
+										<div
+											key={`${rowIndex}-${colIndex}`}
+											class={`flex items-center justify-center border border-gray-400 text-black cursor-pointer ${backgroundColor}`}
+											onClick={() => {
+												if (isModifiable) {
+													this.setState({
+														selectedCell: { row: rowIndex, col: colIndex },
+													});
+												}
+											}}
+										>
+											{cell.letter}
+										</div>
+									);
+								})
+							)}
 						</div>
 					</div>
 				</div>
 
-				{/* Submit Button */}
-				<button
-					class="px-4 py-1 my-4 bg-blue-500 text-white rounded hover:bg-blue-600"
-					onClick={this.handleSubmit}
-				>
-					Submit Grid
-				</button>
+				{/* Bottom Controls: Time, Tries, Submit */}
+				<div class="flex items-center justify-center gap-6 my-4">
+					{/* Time */}
+					<div class="flex flex-col items-center">
+						<p class="text-sm font-bold text-gray-800">Time</p>
+						<p class="text-xl text-blue-600">
+							{seconds_to_display_string(elapsedTime)}
+						</p>
+					</div>
+
+					{/* Submit Button */}
+					<button
+  						className="px-4 py-2 bg-gray-400 text-white border border-gray-400"
+						onClick={this.handleSubmit}
+					>
+						Submit Grid
+					</button>
+
+					{/* Tries */}
+					<div class="flex flex-col items-center">
+						<p class="text-sm font-bold text-gray-800">Tries</p>
+						<p class="text-xl text-red-600">{triesLeft}</p>
+					</div>
+				</div>
+
+				{/* Mobile Keyboard */} 
+				{this.state.isMobile && this.renderMobileKeyboard()}
 			</div>
 		);
 	}
