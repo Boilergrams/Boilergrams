@@ -428,7 +428,7 @@ export default class GridGame extends Component<unknown, GameState> {
 		const correctLettersCopy: Record<string, number> = { ...correctLetters };
 
 		return (
-			<div class="flex flex-col items-center">
+			<div class="flex flex-col items-center touch-manipulation">
 				{/* Letter Bank */}
 				<div class="flex flex-wrap justify-center gap-1 px-4 mb-2">
 					{letterBank.split("").map((letter, index) => {
