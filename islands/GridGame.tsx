@@ -428,7 +428,7 @@ export default class GridGame extends Component<unknown, GameState> {
 		const correctLettersCopy: Record<string, number> = { ...correctLetters };
 
 		return (
-			<div class="flex flex-col items-center">
+			<div class="flex flex-col items-center touch-manipulation">
 				{/* Letter Bank */}
 				<div class="flex flex-wrap justify-center gap-1 px-4 mb-2">
 					{letterBank.split("").map((letter, index) => {
@@ -509,6 +509,9 @@ export default class GridGame extends Component<unknown, GameState> {
 					</div>
 				</div>
 
+				{/* Mobile Keyboard */} 
+				{this.state.isMobile && this.renderMobileKeyboard()}
+
 				{/* Bottom Controls: Time, Tries, Submit */}
 				<div class="flex items-center justify-center gap-6 my-4">
 					{/* Time */}
@@ -520,12 +523,15 @@ export default class GridGame extends Component<unknown, GameState> {
 					</div>
 
 					{/* Submit Button */}
-					<button
-  						className="px-4 py-2 bg-gray-400 text-white border border-gray-400"
-						onClick={this.handleSubmit}
-					>
-						Submit Grid
-					</button>
+					{!this.state.isMobile && (
+						<button
+							className="px-4 py-2 bg-blue-400 text-white border border-gray-200"
+							onClick={this.handleSubmit}
+						>
+							Submit Grid
+						</button>
+						)			
+					}
 
 					{/* Tries */}
 					<div class="flex flex-col items-center">
@@ -533,9 +539,6 @@ export default class GridGame extends Component<unknown, GameState> {
 						<p class="text-xl text-red-600">{triesLeft}</p>
 					</div>
 				</div>
-
-				{/* Mobile Keyboard */} 
-				{this.state.isMobile && this.renderMobileKeyboard()}
 			</div>
 		);
 	}
