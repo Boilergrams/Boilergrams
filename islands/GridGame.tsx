@@ -525,7 +525,7 @@ export default class GridGame extends Component<unknown, GameState> {
 					{/* Submit Button */}
 					{!this.state.isMobile && (
 						<button
-							className="px-4 py-2 bg-gray-400 text-white border border-gray-200"
+							className="px-4 py-2 bg-blue-400 text-white border border-gray-200"
 							onClick={this.handleSubmit}
 						>
 							Submit Grid
